@@ -71,6 +71,9 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(2);
+
+
 class Sketch {
   static get DefaultOptions() {
     return {};
@@ -83,6 +86,16 @@ class Sketch {
 
     // Bind
     this.drawFrame = this.drawFrame.bind(this);
+
+    // Rendering
+    this._canvas = document.createElement('canvas');
+    this._ctx = this._canvas.getContext('2d');
+    this._root.appendChild(this._canvas);
+
+    // Device pixel ratio.
+    this._DPR = 1;// window.devicePixelRatio;
+
+    this.onResize();
   }
 
   startDrawing() {
@@ -95,9 +108,13 @@ class Sketch {
   }
 
   onResize() {
-    // Update sketch sizes
-    this.sketchSize.w = window.innerWidth;
-    this.sketchSize.h = window.innerHeight;
+    const { innerWidth, innerHeight } = window;
+    this._viewportSize = { w: innerWidth, h: innerHeight };
+
+    this._canvas.style.width = `${innerWidth}px`;
+    this._canvas.style.height = `${innerHeight}px`;
+    this._canvas.setAttribute('width', `${innerWidth * this._DPR}px`);
+    this._canvas.setAttribute('height', `${innerHeight * this._DPR}px`);
   }
 
   drawFrame() {
@@ -105,9 +122,20 @@ class Sketch {
       requestAnimationFrame(this.drawFrame);
     }
 
-    console.log('Hey');
-
     // Draw
+    this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+    const gridSize = {
+      x: 100,
+      y: 60,
+    };
+
+    for (let x = 0; x < this._viewportSize.w; x += gridSize.x) {
+      for (let y = 0; y < this._viewportSize.h; y += gridSize.y) {
+        this._ctx.fillStyle = `rgba(0, 0, 0, ${Math.random()})`;
+        this._ctx.fillRect(x, y, gridSize.x, gridSize.y);
+      }
+    }
 
     // Update model
   }
@@ -153,6 +181,55 @@ function start() {
 // Start sketch
 start();
 
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* unused harmony export getMouseCoordinates */
+/* unused harmony export getDistance2d */
+/* unused harmony export absMax */
+/* unused harmony export createCanvasFullScreenBCR */
+/* unused harmony export getAngleBetweenPoints */
+/* unused harmony export bitwiseRound */
+function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
+  let toReturn = {};
+
+  toReturn.x = Math.round(((evt.clientX * devicePxRatio) - canvasBCR.left) /
+      (canvasBCR.right - canvasBCR.left) * canvasBCR.width);
+  toReturn.y = Math.round(((evt.clientY * devicePxRatio) - canvasBCR.top) /
+    (canvasBCR.bottom - canvasBCR.top) * canvasBCR.height);
+
+  return toReturn;
+};
+
+function getDistance2d(x1, y1, x2, y2) {
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+};
+
+function absMax(x, y) {
+  return Math.max(Math.abs(x), Math.abs(y));
+};
+
+function createCanvasFullScreenBCR(canvas) {
+  return {
+    top: 0,
+    right: canvas.width,
+    bottom: canvas.height,
+    left: 0,
+    width: canvas.width,
+    height: canvas.height
+  };
+};
+
+function getAngleBetweenPoints(x1, y1, x2, y2) {
+  return Math.atan2(y2 - y1, x2 - x1);
+}
+
+function bitwiseRound(n) {
+  return (0.5 + n) << 0;
+}
 
 /***/ })
 /******/ ]);
