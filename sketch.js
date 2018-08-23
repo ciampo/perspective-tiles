@@ -13,6 +13,7 @@ export default class Sketch {
     // Bind
     this.drawFrame = this.drawFrame.bind(this);
     this.onPointerMove = this.onPointerMove.bind(this);
+    this.onPointerUp = this.onPointerUp.bind(this);
 
     // Rendering
     this._canvas = document.createElement('canvas');
@@ -23,22 +24,28 @@ export default class Sketch {
     this._DPR = 1;// window.devicePixelRatio;
 
     this._baseUnitSize = 80;
-    this._fillColors = [0.9, 0.7, 0.5];
+    this._colorBrightness = [0.9, 0.7, 0.5];
+    this._hue = Math.random();
 
     this._root.addEventListener('pointermove', this.onPointerMove, false);
+    this._root.addEventListener('pointerup', this.onPointerUp, false);
 
     this.onResize();
   }
 
+  onPointerUp() {
+    this._hue = Math.random();
+  }
+
   onPointerMove(evt) {
     const xPos = (evt.clientX - this._viewportSize.w / 2) /
-      (this._viewportSize.w * 4);
+      (this._viewportSize.w);
     const yPos = (evt.clientY - this._viewportSize.h / 2) /
-      (this._viewportSize.h * 4);
-    const f = xPos + yPos;
+      (this._viewportSize.h);
+    const f = xPos / 4 + yPos / 4;
 
-    this._fillColors[1] = 0.5 - f;
-    this._fillColors[2] = 0.5 + f;
+    this._colorBrightness[1] = 0.5 - f;
+    this._colorBrightness[2] = 0.5 + f;
   }
 
   startDrawing() {
@@ -60,9 +67,10 @@ export default class Sketch {
     this._canvas.setAttribute('height', `${innerHeight * this._DPR}px`);
   }
 
-  _generateFillColor(n) {
-    const q = Math.round(255 * n);
-    return `rgb(${q}, ${q}, ${q})`;
+  _generateFillColor(brightness) {
+    const hue = Math.round(360 * this._hue);
+    return `hsl(${hue}, 78%, ${90 - Math.round((1 - brightness) * 40)}%)`;
+
   }
 
   drawFrame() {
@@ -71,7 +79,7 @@ export default class Sketch {
     }
 
     // Draw
-    this._ctx.fillStyle = this._generateFillColor(this._fillColors[0]);
+    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[0], 0);
     this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
 
     for (let x = 0; x < this._viewportSize.w / this._baseUnitSize + 1; x += 1) {
@@ -87,7 +95,7 @@ export default class Sketch {
 
     const u = this._baseUnitSize;
 
-    this._ctx.fillStyle = this._generateFillColor(this._fillColors[1]);
+    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[1], 1);
     this._ctx.beginPath();
     this._ctx.moveTo(x * u, y * u);
     this._ctx.lineTo((x + 0.5) * u, y * u);
@@ -98,7 +106,7 @@ export default class Sketch {
     this._ctx.closePath();
     this._ctx.fill();
 
-    this._ctx.fillStyle = this._generateFillColor(this._fillColors[2]);
+    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[2], 2);
     this._ctx.beginPath();
     this._ctx.moveTo((x + 1) * u, y * u);
     this._ctx.lineTo((x + 1) * u, (y + 0.5) * u);
