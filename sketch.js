@@ -22,8 +22,8 @@ export default class Sketch {
     // Device pixel ratio.
     this._DPR = 1;// window.devicePixelRatio;
 
-    this._baseUnitSize = 120;
-    this._fillColors = [1, 0.7, 0.5];
+    this._baseUnitSize = 80;
+    this._fillColors = [0.9, 0.7, 0.5];
 
     this._root.addEventListener('pointermove', this.onPointerMove, false);
 
