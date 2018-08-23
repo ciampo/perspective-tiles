@@ -51,18 +51,43 @@ export default class Sketch {
     // Draw
     this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
+    const baseUnitSize = 40;
     const gridSize = {
-      x: 100,
-      y: 60,
+      x: baseUnitSize * 3,
+      y: baseUnitSize * 2,
     };
 
-    for (let x = 0; x < this._viewportSize.w; x += gridSize.x) {
-      for (let y = 0; y < this._viewportSize.h; y += gridSize.y) {
-        this._ctx.fillStyle = `rgba(0, 0, 0, ${Math.random()})`;
-        this._ctx.fillRect(x, y, gridSize.x, gridSize.y);
+    this._ctx.strokeStyle = `rgba(0, 0, 0, 1)`;
+
+    for (let x = 0; x < this._viewportSize.w; x += (baseUnitSize * 4)) {
+      for (let y = 0; y < this._viewportSize.h; y += (baseUnitSize * 2)) {
+        this._drawCell(x, y, baseUnitSize);
       }
     }
 
+    for (let x = - baseUnitSize * 2; x < this._viewportSize.w; x += (baseUnitSize * 4)) {
+      for (let y = - baseUnitSize; y < this._viewportSize.h; y += (baseUnitSize * 2)) {
+        this._drawCell(x, y, baseUnitSize);
+      }
+    }
+
+
     // Update model
+  }
+
+  _drawCell(x, y, baseUnitSize) {
+    this._ctx.beginPath();
+    this._ctx.moveTo(x, y + baseUnitSize);
+    this._ctx.lineTo(x + baseUnitSize, y);
+    this._ctx.lineTo(x + baseUnitSize * 2, y + baseUnitSize);
+    this._ctx.lineTo(x + baseUnitSize, y + baseUnitSize * 2);
+
+    this._ctx.moveTo(x + baseUnitSize, y);
+    this._ctx.lineTo(x + baseUnitSize * 2, y);
+    this._ctx.lineTo(x + baseUnitSize * 3, y + baseUnitSize);
+    this._ctx.lineTo(x + baseUnitSize * 2, y + baseUnitSize);
+
+    this._ctx.closePath();
+    this._ctx.stroke();
   }
 };
