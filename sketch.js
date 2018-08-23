@@ -70,7 +70,33 @@ export default class Sketch {
   _generateFillColor(brightness) {
     const hue = Math.round(360 * this._hue);
     return `hsl(${hue}, 78%, ${90 - Math.round((1 - brightness) * 40)}%)`;
+  }
 
+  _generateCanvasPattern(density, fill) {
+    const s = 48;
+    const c = document.createElement("canvas");
+    c.width = s;
+    c.height = s;
+    const ctx = c.getContext("2d");
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, s, s);
+
+    ctx.fillStyle = fill;
+
+    for (let x = 0; x <= s; x += density) {
+      for (let y = 0; y <= s; y += density) {
+        ctx.beginPath();
+        ctx.arc(x, y, 1, 0, 2 * Math.PI);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // ctx.arc(50, 50, 10, 0, 2 * Math.PI);
+
+
+    return c;
   }
 
   drawFrame() {
@@ -79,7 +105,11 @@ export default class Sketch {
     }
 
     // Draw
-    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[0], 0);
+    // this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[0], 0);
+    this._ctx.fillStyle = this._ctx.createPattern(
+      this._generateCanvasPattern(8, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
+      'repeat',
+    );
     this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
 
     for (let x = 0; x < this._viewportSize.w / this._baseUnitSize + 1; x += 1) {
@@ -96,6 +126,12 @@ export default class Sketch {
     const u = this._baseUnitSize;
 
     this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[1], 1);
+
+    this._ctx.fillStyle = this._ctx.createPattern(
+      this._generateCanvasPattern(4, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
+      'repeat',
+    );
+
     this._ctx.beginPath();
     this._ctx.moveTo(x * u, y * u);
     this._ctx.lineTo((x + 0.5) * u, y * u);
@@ -107,6 +143,12 @@ export default class Sketch {
     this._ctx.fill();
 
     this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[2], 2);
+
+    this._ctx.fillStyle = this._ctx.createPattern(
+      this._generateCanvasPattern(3, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
+      'repeat',
+    );
+
     this._ctx.beginPath();
     this._ctx.moveTo((x + 1) * u, y * u);
     this._ctx.lineTo((x + 1) * u, (y + 0.5) * u);
