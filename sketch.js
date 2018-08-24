@@ -23,7 +23,7 @@ export default class Sketch {
     // Device pixel ratio.
     this._DPR = 1;// window.devicePixelRatio;
 
-    this._baseUnitSize = 80;
+    this._baseUnitSize = 160;
     this._colorBrightness = [0.9, 0.7, 0.5];
     this._hue = Math.random();
 
@@ -73,7 +73,7 @@ export default class Sketch {
   }
 
   _generateCanvasPattern(density, fill) {
-    const s = 48;
+    const s = 24;
     const c = document.createElement("canvas");
     c.width = s;
     c.height = s;
@@ -84,17 +84,18 @@ export default class Sketch {
 
     ctx.fillStyle = fill;
 
+    ctx.beginPath();
     for (let x = 0; x <= s; x += density) {
       for (let y = 0; y <= s; y += density) {
-        ctx.beginPath();
-        ctx.arc(x, y, 1, 0, 2 * Math.PI);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(x - 1, y - 1);
+        ctx.lineTo(x + 1, y - 1);
+        ctx.lineTo(x + 1, y + 1);
+        ctx.lineTo(x - 1, y + 1);
+        ctx.lineTo(x - 1, y - 1);
       }
     }
-
-    // ctx.arc(50, 50, 10, 0, 2 * Math.PI);
-
+    ctx.closePath();
+    ctx.fill();
 
     return c;
   }
@@ -141,6 +142,7 @@ export default class Sketch {
     this._ctx.lineTo((x + 1) * u, (y + 0.5) * u);
     this._ctx.closePath();
     this._ctx.fill();
+    // this._ctx.stroke();
 
     this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[2], 2);
 
@@ -158,5 +160,6 @@ export default class Sketch {
     this._ctx.lineTo(x * u, (y + 0.5) * u);
     this._ctx.closePath();
     this._ctx.fill();
+    // this._ctx.stroke();
   }
 };
