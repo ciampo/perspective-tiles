@@ -1,8 +1,11 @@
-export const drawTile = (ctx, u, fillBg, fillA, fillB, x0, x1, y0, y1, progress) => {
+export const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
   ctx.save();
 
+  // Scale by the unit
   ctx.scale(u, u);
-  ctx.translate(x0 + x1 + 0.5, y0 + y1 + 0.5);
+  // Translate to the center of the tile
+  ctx.translate(x + 0.5, y + 0.5);
+  // Rotate (when animating)
   ctx.rotate(Math.PI * progress);
 
   ctx.fillStyle = fillA;

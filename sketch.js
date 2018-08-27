@@ -117,9 +117,12 @@ export default class Sketch {
     for (let x = -1; x < maxX; x += 1) {
       for (let y = 0; y < maxY; y += 1) {
         const yOffset = x % 2 === 0 ? 0 : -0.5;
-        drawTile(this._ctx, this.u,
+        drawTile(
+          this._ctx, this.u,
           this.fillBg, this.fillA, this.fillB,
-          x, 0, y, yOffset, this._offsetCounter / this._offsetCounterRTT);
+          x, y + yOffset,
+          this._offsetCounter / this._offsetCounterRTT
+        );
       }
     }
 
