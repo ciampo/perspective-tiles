@@ -3,13 +3,6 @@ import Sketch from './sketch.js';
 let sketch;
 let datGui;
 
-function onKeyDown(evt) {
-  // 'c' key pressed.
-  // if (evt.keyCode === 67) {
-  //   sketch.switchColorMode();
-  // }
-}
-
 // Draw entry point
 function start() {
   // Start sketch.
@@ -18,12 +11,13 @@ function start() {
 
   // Event listeners.
   window.addEventListener('resize', _ => {sketch.onResize()}, false);
-  document.addEventListener('keydown', onKeyDown, false);
 
   // dat.gui
   // datGui = new dat.GUI();
-  // datGui.add(sketch, 'rendererType', Sketch.RendererTypes);
-  // datGui.add(sketch, 'colorMode', Sketch.ColorModes);
+  // datGui.add(sketch, 'u', 20, 260, 1);
+  // datGui.addColor(sketch, 'fillBg');
+  // datGui.addColor(sketch, 'fillA');
+  // datGui.addColor(sketch, 'fillB');
 }
 
 // Start sketch

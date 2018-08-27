@@ -1,4 +1,5 @@
-import * as utils from './utils.js';
+import { stepEasing } from './utils.js';
+import { drawTile } from './tile.js';
 
 export default class Sketch {
   static get DefaultOptions() {
@@ -12,8 +13,8 @@ export default class Sketch {
 
     // Bind
     this.drawFrame = this.drawFrame.bind(this);
-    this.onPointerMove = this.onPointerMove.bind(this);
-    this.onPointerUp = this.onPointerUp.bind(this);
+    this._onPointerMove = this._onPointerMove.bind(this);
+    this._onPointerUp = this._onPointerUp.bind(this);
 
     // Rendering
     this._canvas = document.createElement('canvas');
@@ -23,29 +24,50 @@ export default class Sketch {
     // Device pixel ratio.
     this._DPR = 1;// window.devicePixelRatio;
 
-    this._baseUnitSize = 160;
-    this._colorBrightness = [0.9, 0.7, 0.5];
-    this._hue = Math.random();
+    this._root.addEventListener('pointermove', this._onPointerMove);
+    this._root.addEventListener('pointerup', this._onPointerUp);
 
-    this._root.addEventListener('pointermove', this.onPointerMove, false);
-    this._root.addEventListener('pointerup', this.onPointerUp, false);
+    this._offsetCounter = 0;
+    this._offsetCounterActive = false;
+    this._offsetCounterRTT = 80;
 
     this.onResize();
   }
 
-  onPointerUp() {
-    this._hue = Math.random();
+  _createGrey(percBrightness) {
+    return `hsl(0, 0%, ${percBrightness}%)`;
   }
 
-  onPointerMove(evt) {
-    const xPos = (evt.clientX - this._viewportSize.w / 2) /
-      (this._viewportSize.w);
-    const yPos = (evt.clientY - this._viewportSize.h / 2) /
-      (this._viewportSize.h);
-    const f = xPos / 4 + yPos / 4;
+  get u() {
+    return this._baseUnitSize || 60;
+  }
 
-    this._colorBrightness[1] = 0.5 - f;
-    this._colorBrightness[2] = 0.5 + f;
+  set u(u) {
+    this._baseUnitSize = u;
+  }
+
+  get fillBg() {
+    return this._fillBg || this._createGrey(100);
+  }
+
+  set fillBg(fillBg) {
+    this._fillBg = fillBg;
+  }
+
+  get fillA() {
+    return this._fillA || this._createGrey(70);
+  }
+
+  set fillA(fillA) {
+    this._fillA = fillA;
+  }
+
+  get fillB() {
+    return this._fillB || this._createGrey(30);
+  }
+
+  set fillB(fillB) {
+    this._fillB = fillB;
   }
 
   startDrawing() {
@@ -67,99 +89,150 @@ export default class Sketch {
     this._canvas.setAttribute('height', `${innerHeight * this._DPR}px`);
   }
 
-  _generateFillColor(brightness) {
-    const hue = Math.round(360 * this._hue);
-    return `hsl(${hue}, 78%, ${90 - Math.round((1 - brightness) * 40)}%)`;
+  _onPointerMove(evt) {
+    // deltaY ranges between -0.4 and +0.4
+    const deltaY = (evt.clientY - this._viewportSize.h / 2) / this._viewportSize.h / 5 * 4;
+
+    this.fillA = this._createGrey(Math.round(100 * (0.5 + deltaY)));
+    this.fillB = this._createGrey(Math.round(100 * (0.5 - deltaY)));
   }
 
-  _generateCanvasPattern(density, fill) {
-    const s = 24;
-    const c = document.createElement("canvas");
-    c.width = s;
-    c.height = s;
-    const ctx = c.getContext("2d");
-
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, s, s);
-
-    ctx.fillStyle = fill;
-
-    ctx.beginPath();
-    for (let x = 0; x <= s; x += density) {
-      for (let y = 0; y <= s; y += density) {
-        ctx.moveTo(x - 1, y - 1);
-        ctx.lineTo(x + 1, y - 1);
-        ctx.lineTo(x + 1, y + 1);
-        ctx.lineTo(x - 1, y + 1);
-        ctx.lineTo(x - 1, y - 1);
-      }
+  _onPointerUp() {
+    if (this._offsetCounterActive) {
+      return;
     }
-    ctx.closePath();
-    ctx.fill();
 
-    return c;
+    this._offsetCounter = 0;
+    this._offsetCounterActive = true;
   }
+
+  // _computeOffsetX(n, maxN, secondHalfOfTheLoop) {
+  //   let xOffset = - 0.5 * this._wholeAnimationLoops;
+
+  //   if (this._offsetCounterActive) {
+  //     const cycleCounter = Math.min(maxN * this._offsetCounterRTT, this._offsetCounter);
+  //     const inverseCounter = maxN * this._offsetCounterRTT - cycleCounter;
+  //     const nextIteration = n + 1;
+  //     if (inverseCounter < nextIteration * this._offsetCounterRTT) {
+  //       const additionalAmount = (maxN - nextIteration) * this._offsetCounterRTT;
+  //       const perc = (cycleCounter - additionalAmount) / this._offsetCounterRTT;
+  //       xOffset -= 0.5 * stepEasing(perc, 0.8);
+  //     }
+
+  //     if (secondHalfOfTheLoop && this._offsetCounter > maxN * this._offsetCounterRTT) {
+  //       const cycleCounter = this._offsetCounter % (maxN * this._offsetCounterRTT);
+  //       const inverseCounter = maxN * this._offsetCounterRTT - cycleCounter;
+
+  //       const cycleN = 2 * maxN - n;
+  //       const perc = Math.min(cycleN, cycleCounter / this._offsetCounterRTT);
+  //       xOffset -= 0.5 * stepEasing(perc, 0.8);
+  //     }
+  //   }
+
+  //   return xOffset;
+  // }
 
   drawFrame() {
     if (this._drawing) {
       requestAnimationFrame(this.drawFrame);
     }
 
-    // Draw
-    // this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[0], 0);
-    this._ctx.fillStyle = this._ctx.createPattern(
-      this._generateCanvasPattern(8, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
-      'repeat',
-    );
-    this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
+    const maxX = Math.round(this._viewportSize.w / this.u) + 1;
+    const maxY = Math.round(this._viewportSize.h / this.u) + 1;
+    let x, y;
 
-    for (let x = 0; x < this._viewportSize.w / this._baseUnitSize + 1; x += 1) {
-      for (let y = 0; y < this._viewportSize.h / this._baseUnitSize + 1; y += 1) {
+    for (x = -1; x < maxX; x += 1) {
+      for (y = 0; y < maxY; y += 1) {
         const yOffset = x % 2 === 0 ? 0 : -0.5;
-
-        this._drawCell(x, y + yOffset);
+        drawTile(this._ctx, this.u,
+          this.fillBg, this.fillA, this.fillB,
+          x, 0, y, yOffset, this._offsetCounter / this._offsetCounterRTT);
       }
     }
-  }
 
-  _drawCell(x, y) {
+    // Increate offset counter.
+    if (this._offsetCounterActive) {
+      this._offsetCounter += 1;
 
-    const u = this._baseUnitSize;
+      // Allow 2 cycles.
+      if (this._offsetCounter > this._offsetCounterRTT) {
+        this._offsetCounterActive = false;
+        this._offsetCounter = 0;
+      }
+    }
 
-    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[1], 1);
+    // // Slanted \_\
+    // this._ctx.fillStyle = this.fillA;
+    // this._ctx.beginPath();
+    // for (x = -1; x < maxX; x += 1) {
+    //   const xOffset = this._offsetCounter > maxX * this._offsetCounterRTT ? - 0.5 : 0;
 
-    this._ctx.fillStyle = this._ctx.createPattern(
-      this._generateCanvasPattern(4, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
-      'repeat',
-    );
+    //   for (y = 0; y < maxY; y += 1) {
+    //     const yOffset = x % 2 === 0 ? 0 : -0.5;
 
-    this._ctx.beginPath();
-    this._ctx.moveTo(x * u, y * u);
-    this._ctx.lineTo((x + 0.5) * u, y * u);
-    this._ctx.lineTo(x * u, (y + 0.5) * u);
-    this._ctx.moveTo((x + 1) * u, (y + 1) * u);
-    this._ctx.lineTo((x + 0.5) * u, (y + 1) * u);
-    this._ctx.lineTo((x + 1) * u, (y + 0.5) * u);
-    this._ctx.closePath();
-    this._ctx.fill();
+    //     this._ctx.moveTo(this.u * (x + xOffset + 0.5), this.u * (y + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 1.5), this.u * (y + 0.5 + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + 0.5 + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 0.5), this.u * (y + yOffset));
+    //   }
+    // }
+    // this._ctx.closePath();
+    // this._ctx.fill();
+
+    // // Slanted /_/
+    // this._ctx.fillStyle = this.fillB;
+    // this._ctx.beginPath();
+    // for (x = -1; x < maxX; x += 1) {
+    //   const xOffset = this._offsetCounter > maxX * this._offsetCounterRTT ? - 0.5 : 0;
+
+    //   for (y = 0; y < maxY; y += 1) {
+    //     const yOffset = x % 2 === 0 ? 0 : -0.5;
+
+    //     this._ctx.moveTo(this.u * (x + xOffset + 1), this.u * (y + 0.5 + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 1.5), this.u * (y + 0.5  + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + 1  + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 0.5), this.u * (y + 1  + yOffset));
+    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + 0.5  + yOffset));
+    //   }
+    // }
+    // this._ctx.closePath();
+    // this._ctx.fill();
+
+    // // Diamond
+    // this._ctx.fillStyle = this.fillBg;
+    // this._ctx.strokeStyle = '#666';
+    // this._ctx.lineWidth = 0.1;
+    // this._ctx.beginPath();
+    // const diamondsMaxX = this._offsetCounterActive ? 2 * maxX : maxX;
+    // for (x = -1; x < diamondsMaxX; x += 1) {
+    //   const xOffset = this._computeOffsetX(x, maxX, true);
+
+    //   for (y = 0; y < maxY; y += 1) {
+    //     const yOffset = x % 2 === 0 ? 0 : -0.5;
+
+    //     this._ctx.moveTo(this.u * (x + 0.5 + xOffset), this.u * (y + yOffset));
+    //     this._ctx.lineTo(this.u * (x + 1 + xOffset), this.u * (y + 0.5  + yOffset));
+    //     this._ctx.lineTo(this.u * (x + 0.5 + xOffset), this.u * (y + 1  + yOffset));
+    //     this._ctx.lineTo(this.u * (x + 0 + xOffset), this.u * (y + 0.5  + yOffset));
+    //     this._ctx.lineTo(this.u * (x + 0.5 + xOffset), this.u * (y + yOffset));
+    //   }
+    // }
+    // this._ctx.closePath();
+    // this._ctx.fill();
     // this._ctx.stroke();
 
-    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[2], 2);
+    // // Increate offset counter.
+    // if (this._offsetCounterActive) {
+    //   this._offsetCounter += 1;
 
-    this._ctx.fillStyle = this._ctx.createPattern(
-      this._generateCanvasPattern(3, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
-      'repeat',
-    );
+    //   // Allow 2 cycles.
+    //   if (this._offsetCounter > 2 * maxX * this._offsetCounterRTT) {
+    //     this._wholeAnimationLoops += 1;
+    //     this._offsetCounterActive = false;
+    //     console.log(this._wholeAnimationLoops);
+    //   }
+    // }
 
-    this._ctx.beginPath();
-    this._ctx.moveTo((x + 1) * u, y * u);
-    this._ctx.lineTo((x + 1) * u, (y + 0.5) * u);
-    this._ctx.lineTo((x + 0.5) * u, y * u);
-    this._ctx.moveTo(x * u, (y + 1) * u);
-    this._ctx.lineTo((x + 0.5) * u, (y + 1) * u);
-    this._ctx.lineTo(x * u, (y + 0.5) * u);
-    this._ctx.closePath();
-    this._ctx.fill();
-    // this._ctx.stroke();
   }
 };

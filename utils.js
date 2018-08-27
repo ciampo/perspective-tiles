@@ -35,3 +35,8 @@ export function getAngleBetweenPoints(x1, y1, x2, y2) {
 export function bitwiseRound(n) {
   return (0.5 + n) << 0;
 }
+
+export function stepEasing(n, t = 0.5) {
+  const rest = Math.floor(n);
+  return rest + Math.min(1, (n - rest) / t);
+}
