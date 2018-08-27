@@ -80,8 +80,8 @@ export default class Sketch {
   }
 
   onResize() {
-    const { innerWidth, innerHeight } = window;
-    this._viewportSize = { w: innerWidth, h: innerHeight };
+    const {innerWidth, innerHeight} = window;
+    this._viewportSize = {w: innerWidth, h: innerHeight};
 
     this._canvas.style.width = `${innerWidth}px`;
     this._canvas.style.height = `${innerHeight}px`;
@@ -106,32 +106,6 @@ export default class Sketch {
     this._offsetCounterActive = true;
   }
 
-  // _computeOffsetX(n, maxN, secondHalfOfTheLoop) {
-  //   let xOffset = - 0.5 * this._wholeAnimationLoops;
-
-  //   if (this._offsetCounterActive) {
-  //     const cycleCounter = Math.min(maxN * this._offsetCounterRTT, this._offsetCounter);
-  //     const inverseCounter = maxN * this._offsetCounterRTT - cycleCounter;
-  //     const nextIteration = n + 1;
-  //     if (inverseCounter < nextIteration * this._offsetCounterRTT) {
-  //       const additionalAmount = (maxN - nextIteration) * this._offsetCounterRTT;
-  //       const perc = (cycleCounter - additionalAmount) / this._offsetCounterRTT;
-  //       xOffset -= 0.5 * stepEasing(perc, 0.8);
-  //     }
-
-  //     if (secondHalfOfTheLoop && this._offsetCounter > maxN * this._offsetCounterRTT) {
-  //       const cycleCounter = this._offsetCounter % (maxN * this._offsetCounterRTT);
-  //       const inverseCounter = maxN * this._offsetCounterRTT - cycleCounter;
-
-  //       const cycleN = 2 * maxN - n;
-  //       const perc = Math.min(cycleN, cycleCounter / this._offsetCounterRTT);
-  //       xOffset -= 0.5 * stepEasing(perc, 0.8);
-  //     }
-  //   }
-
-  //   return xOffset;
-  // }
-
   drawFrame() {
     if (this._drawing) {
       requestAnimationFrame(this.drawFrame);
@@ -139,10 +113,9 @@ export default class Sketch {
 
     const maxX = Math.round(this._viewportSize.w / this.u) + 1;
     const maxY = Math.round(this._viewportSize.h / this.u) + 1;
-    let x, y;
 
-    for (x = -1; x < maxX; x += 1) {
-      for (y = 0; y < maxY; y += 1) {
+    for (let x = -1; x < maxX; x += 1) {
+      for (let y = 0; y < maxY; y += 1) {
         const yOffset = x % 2 === 0 ? 0 : -0.5;
         drawTile(this._ctx, this.u,
           this.fillBg, this.fillA, this.fillB,
@@ -160,79 +133,5 @@ export default class Sketch {
         this._offsetCounter = 0;
       }
     }
-
-    // // Slanted \_\
-    // this._ctx.fillStyle = this.fillA;
-    // this._ctx.beginPath();
-    // for (x = -1; x < maxX; x += 1) {
-    //   const xOffset = this._offsetCounter > maxX * this._offsetCounterRTT ? - 0.5 : 0;
-
-    //   for (y = 0; y < maxY; y += 1) {
-    //     const yOffset = x % 2 === 0 ? 0 : -0.5;
-
-    //     this._ctx.moveTo(this.u * (x + xOffset + 0.5), this.u * (y + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 1.5), this.u * (y + 0.5 + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + 0.5 + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 0.5), this.u * (y + yOffset));
-    //   }
-    // }
-    // this._ctx.closePath();
-    // this._ctx.fill();
-
-    // // Slanted /_/
-    // this._ctx.fillStyle = this.fillB;
-    // this._ctx.beginPath();
-    // for (x = -1; x < maxX; x += 1) {
-    //   const xOffset = this._offsetCounter > maxX * this._offsetCounterRTT ? - 0.5 : 0;
-
-    //   for (y = 0; y < maxY; y += 1) {
-    //     const yOffset = x % 2 === 0 ? 0 : -0.5;
-
-    //     this._ctx.moveTo(this.u * (x + xOffset + 1), this.u * (y + 0.5 + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 1.5), this.u * (y + 0.5  + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + 1  + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 0.5), this.u * (y + 1  + yOffset));
-    //     this._ctx.lineTo(this.u * (x + xOffset + 1), this.u * (y + 0.5  + yOffset));
-    //   }
-    // }
-    // this._ctx.closePath();
-    // this._ctx.fill();
-
-    // // Diamond
-    // this._ctx.fillStyle = this.fillBg;
-    // this._ctx.strokeStyle = '#666';
-    // this._ctx.lineWidth = 0.1;
-    // this._ctx.beginPath();
-    // const diamondsMaxX = this._offsetCounterActive ? 2 * maxX : maxX;
-    // for (x = -1; x < diamondsMaxX; x += 1) {
-    //   const xOffset = this._computeOffsetX(x, maxX, true);
-
-    //   for (y = 0; y < maxY; y += 1) {
-    //     const yOffset = x % 2 === 0 ? 0 : -0.5;
-
-    //     this._ctx.moveTo(this.u * (x + 0.5 + xOffset), this.u * (y + yOffset));
-    //     this._ctx.lineTo(this.u * (x + 1 + xOffset), this.u * (y + 0.5  + yOffset));
-    //     this._ctx.lineTo(this.u * (x + 0.5 + xOffset), this.u * (y + 1  + yOffset));
-    //     this._ctx.lineTo(this.u * (x + 0 + xOffset), this.u * (y + 0.5  + yOffset));
-    //     this._ctx.lineTo(this.u * (x + 0.5 + xOffset), this.u * (y + yOffset));
-    //   }
-    // }
-    // this._ctx.closePath();
-    // this._ctx.fill();
-    // this._ctx.stroke();
-
-    // // Increate offset counter.
-    // if (this._offsetCounterActive) {
-    //   this._offsetCounter += 1;
-
-    //   // Allow 2 cycles.
-    //   if (this._offsetCounter > 2 * maxX * this._offsetCounterRTT) {
-    //     this._wholeAnimationLoops += 1;
-    //     this._offsetCounterActive = false;
-    //     console.log(this._wholeAnimationLoops);
-    //   }
-    // }
-
   }
 };
