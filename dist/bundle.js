@@ -71,7 +71,9 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__utils_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__tile_js__ = __webpack_require__(2);
+
 
 
 class Sketch {
@@ -86,8 +88,8 @@ class Sketch {
 
     // Bind
     this.drawFrame = this.drawFrame.bind(this);
-    this.onPointerMove = this.onPointerMove.bind(this);
-    this.onPointerUp = this.onPointerUp.bind(this);
+    this._onPointerMove = this._onPointerMove.bind(this);
+    this._onPointerUp = this._onPointerUp.bind(this);
 
     // Rendering
     this._canvas = document.createElement('canvas');
@@ -97,29 +99,50 @@ class Sketch {
     // Device pixel ratio.
     this._DPR = 1;// window.devicePixelRatio;
 
-    this._baseUnitSize = 160;
-    this._colorBrightness = [0.9, 0.7, 0.5];
-    this._hue = Math.random();
+    this._root.addEventListener('pointermove', this._onPointerMove);
+    this._root.addEventListener('pointerup', this._onPointerUp);
 
-    this._root.addEventListener('pointermove', this.onPointerMove, false);
-    this._root.addEventListener('pointerup', this.onPointerUp, false);
+    this._offsetCounter = 0;
+    this._offsetCounterActive = false;
+    this._offsetCounterRTT = 80;
 
     this.onResize();
   }
 
-  onPointerUp() {
-    this._hue = Math.random();
+  _createGrey(percBrightness) {
+    return `hsl(0, 0%, ${percBrightness}%)`;
   }
 
-  onPointerMove(evt) {
-    const xPos = (evt.clientX - this._viewportSize.w / 2) /
-      (this._viewportSize.w);
-    const yPos = (evt.clientY - this._viewportSize.h / 2) /
-      (this._viewportSize.h);
-    const f = xPos / 4 + yPos / 4;
+  get u() {
+    return this._baseUnitSize || 60;
+  }
 
-    this._colorBrightness[1] = 0.5 - f;
-    this._colorBrightness[2] = 0.5 + f;
+  set u(u) {
+    this._baseUnitSize = u;
+  }
+
+  get fillBg() {
+    return this._fillBg || this._createGrey(100);
+  }
+
+  set fillBg(fillBg) {
+    this._fillBg = fillBg;
+  }
+
+  get fillA() {
+    return this._fillA || this._createGrey(70);
+  }
+
+  set fillA(fillA) {
+    this._fillA = fillA;
+  }
+
+  get fillB() {
+    return this._fillB || this._createGrey(30);
+  }
+
+  set fillB(fillB) {
+    this._fillB = fillB;
   }
 
   startDrawing() {
@@ -132,8 +155,8 @@ class Sketch {
   }
 
   onResize() {
-    const { innerWidth, innerHeight } = window;
-    this._viewportSize = { w: innerWidth, h: innerHeight };
+    const {innerWidth, innerHeight} = window;
+    this._viewportSize = {w: innerWidth, h: innerHeight};
 
     this._canvas.style.width = `${innerWidth}px`;
     this._canvas.style.height = `${innerHeight}px`;
@@ -141,37 +164,21 @@ class Sketch {
     this._canvas.setAttribute('height', `${innerHeight * this._DPR}px`);
   }
 
-  _generateFillColor(brightness) {
-    const hue = Math.round(360 * this._hue);
-    return `hsl(${hue}, 78%, ${90 - Math.round((1 - brightness) * 40)}%)`;
+  _onPointerMove(evt) {
+    // deltaY ranges between -0.4 and +0.4
+    const deltaY = (evt.clientY - this._viewportSize.h / 2) / this._viewportSize.h / 5 * 4;
+
+    this.fillA = this._createGrey(Math.round(100 * (0.5 + deltaY)));
+    this.fillB = this._createGrey(Math.round(100 * (0.5 - deltaY)));
   }
 
-  _generateCanvasPattern(density, fill) {
-    const s = 24;
-    const c = document.createElement("canvas");
-    c.width = s;
-    c.height = s;
-    const ctx = c.getContext("2d");
-
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, s, s);
-
-    ctx.fillStyle = fill;
-
-    ctx.beginPath();
-    for (let x = 0; x <= s; x += density) {
-      for (let y = 0; y <= s; y += density) {
-        ctx.moveTo(x - 1, y - 1);
-        ctx.lineTo(x + 1, y - 1);
-        ctx.lineTo(x + 1, y + 1);
-        ctx.lineTo(x - 1, y + 1);
-        ctx.lineTo(x - 1, y - 1);
-      }
+  _onPointerUp() {
+    if (this._offsetCounterActive) {
+      return;
     }
-    ctx.closePath();
-    ctx.fill();
 
-    return c;
+    this._offsetCounter = 0;
+    this._offsetCounterActive = true;
   }
 
   drawFrame() {
@@ -179,62 +186,31 @@ class Sketch {
       requestAnimationFrame(this.drawFrame);
     }
 
-    // Draw
-    // this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[0], 0);
-    this._ctx.fillStyle = this._ctx.createPattern(
-      this._generateCanvasPattern(8, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
-      'repeat',
-    );
-    this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
+    const maxX = Math.round(this._viewportSize.w / this.u) + 1;
+    const maxY = Math.round(this._viewportSize.h / this.u) + 1;
 
-    for (let x = 0; x < this._viewportSize.w / this._baseUnitSize + 1; x += 1) {
-      for (let y = 0; y < this._viewportSize.h / this._baseUnitSize + 1; y += 1) {
+    for (let x = -1; x < maxX; x += 1) {
+      for (let y = 0; y < maxY; y += 1) {
         const yOffset = x % 2 === 0 ? 0 : -0.5;
-
-        this._drawCell(x, y + yOffset);
+        __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_1__tile_js__["a" /* drawTile */])(
+          this._ctx, this.u,
+          this.fillBg, this.fillA, this.fillB,
+          x, y + yOffset,
+          this._offsetCounter / this._offsetCounterRTT
+        );
       }
     }
-  }
 
-  _drawCell(x, y) {
+    // Increate offset counter.
+    if (this._offsetCounterActive) {
+      this._offsetCounter += 1;
 
-    const u = this._baseUnitSize;
-
-    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[1], 1);
-
-    this._ctx.fillStyle = this._ctx.createPattern(
-      this._generateCanvasPattern(4, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
-      'repeat',
-    );
-
-    this._ctx.beginPath();
-    this._ctx.moveTo(x * u, y * u);
-    this._ctx.lineTo((x + 0.5) * u, y * u);
-    this._ctx.lineTo(x * u, (y + 0.5) * u);
-    this._ctx.moveTo((x + 1) * u, (y + 1) * u);
-    this._ctx.lineTo((x + 0.5) * u, (y + 1) * u);
-    this._ctx.lineTo((x + 1) * u, (y + 0.5) * u);
-    this._ctx.closePath();
-    this._ctx.fill();
-    // this._ctx.stroke();
-
-    this._ctx.fillStyle = this._generateFillColor(this._colorBrightness[2], 2);
-
-    this._ctx.fillStyle = this._ctx.createPattern(
-      this._generateCanvasPattern(3, `hsl(${Math.round(this._hue * 360)}, 75%, 30%)`),
-      'repeat',
-    );
-
-    this._ctx.beginPath();
-    this._ctx.moveTo((x + 1) * u, y * u);
-    this._ctx.lineTo((x + 1) * u, (y + 0.5) * u);
-    this._ctx.lineTo((x + 0.5) * u, y * u);
-    this._ctx.moveTo(x * u, (y + 1) * u);
-    this._ctx.lineTo((x + 0.5) * u, (y + 1) * u);
-    this._ctx.lineTo(x * u, (y + 0.5) * u);
-    this._ctx.closePath();
-    this._ctx.fill();
-    // this._ctx.stroke();
+      // Allow 2 cycles.
+      if (this._offsetCounter > this._offsetCounterRTT) {
+        this._offsetCounterActive = false;
+        this._offsetCounter = 0;
+      }
+    }
   }
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = Sketch;
@@ -252,13 +228,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 let sketch;
 let datGui;
 
-function onKeyDown(evt) {
-  // 'c' key pressed.
-  // if (evt.keyCode === 67) {
-  //   sketch.switchColorMode();
-  // }
-}
-
 // Draw entry point
 function start() {
   // Start sketch.
@@ -267,12 +236,13 @@ function start() {
 
   // Event listeners.
   window.addEventListener('resize', _ => {sketch.onResize()}, false);
-  document.addEventListener('keydown', onKeyDown, false);
 
   // dat.gui
   // datGui = new dat.GUI();
-  // datGui.add(sketch, 'rendererType', Sketch.RendererTypes);
-  // datGui.add(sketch, 'colorMode', Sketch.ColorModes);
+  // datGui.add(sketch, 'u', 20, 260, 1);
+  // datGui.addColor(sketch, 'fillBg');
+  // datGui.addColor(sketch, 'fillA');
+  // datGui.addColor(sketch, 'fillB');
 }
 
 // Start sketch
@@ -284,12 +254,65 @@ start();
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
+  ctx.save();
+
+  // Scale by the unit
+  ctx.scale(u, u);
+  // Translate to the center of the tile
+  ctx.translate(x + 0.5, y + 0.5);
+  // Rotate (when animating)
+  ctx.rotate(Math.PI * progress);
+
+  ctx.fillStyle = fillA;
+  ctx.beginPath();
+  ctx.moveTo(-0.5, -0.5);
+  ctx.lineTo(0, -0.5);
+  ctx.lineTo(-0.5, 0);
+  ctx.moveTo(0.5, 0.5);
+  ctx.lineTo(0, 0.5);
+  ctx.lineTo(0.5, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = fillB;
+  ctx.beginPath();
+  ctx.moveTo(0.5, -0.5);
+  ctx.lineTo(0.5, 0);
+  ctx.lineTo(0, -0.5);
+  ctx.moveTo(-0.5, 0.5);
+  ctx.lineTo(0, 0.5);
+  ctx.lineTo(-0.5, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = fillBg;
+  ctx.beginPath();
+  ctx.moveTo(-0.5, 0);
+  ctx.lineTo(0, -0.5);
+  ctx.lineTo(0.5, 0);
+  ctx.lineTo(0, 0.5);
+  ctx.lineTo(-0.5, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+/* harmony export (immutable) */ __webpack_exports__["a"] = drawTile;
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 /* unused harmony export getMouseCoordinates */
 /* unused harmony export getDistance2d */
 /* unused harmony export absMax */
 /* unused harmony export createCanvasFullScreenBCR */
 /* unused harmony export getAngleBetweenPoints */
 /* unused harmony export bitwiseRound */
+/* unused harmony export stepEasing */
 function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
   let toReturn = {};
 
@@ -326,6 +349,11 @@ function getAngleBetweenPoints(x1, y1, x2, y2) {
 
 function bitwiseRound(n) {
   return (0.5 + n) << 0;
+}
+
+function stepEasing(n, t = 0.5) {
+  const rest = Math.floor(n);
+  return rest + Math.min(1, (n - rest) / t);
 }
 
 /***/ })
