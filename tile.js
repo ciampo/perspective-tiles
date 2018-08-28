@@ -1,4 +1,4 @@
-export const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
+export const drawTile = (ctx, u, fillDiamond, fillA, fillB, x, y, progress) => {
   ctx.save();
 
   // Scale by the unit
@@ -6,7 +6,7 @@ export const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
   // Translate to the center of the tile
   ctx.translate(x + 0.5, y + 0.5);
   // Rotate (when animating)
-  ctx.rotate(Math.PI * progress);
+  ctx.rotate(Math.PI * progress / 2);
 
   ctx.fillStyle = fillA;
   ctx.beginPath();
@@ -30,7 +30,7 @@ export const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = fillBg;
+  ctx.fillStyle = fillDiamond;
   ctx.beginPath();
   ctx.moveTo(-0.5, 0);
   ctx.lineTo(0, -0.5);

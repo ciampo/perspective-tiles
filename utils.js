@@ -40,3 +40,7 @@ export function stepEasing(n, t = 0.5) {
   const rest = Math.floor(n);
   return rest + Math.min(1, (n - rest) / t);
 }
+
+export function easeInOutCubic(t) {
+  return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1
+};

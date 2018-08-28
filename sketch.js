@@ -1,4 +1,4 @@
-import { stepEasing } from './utils.js';
+import { easeInOutCubic } from './utils.js';
 import { drawTile } from './tile.js';
 
 export default class Sketch {
@@ -29,7 +29,8 @@ export default class Sketch {
 
     this._offsetCounter = 0;
     this._offsetCounterActive = false;
-    this._offsetCounterRTT = 80;
+    this._offsetCounterRTT = 60;
+    this._offsetLoops = 0;
 
     this.onResize();
   }
@@ -121,7 +122,7 @@ export default class Sketch {
           this._ctx, this.u,
           this.fillBg, this.fillA, this.fillB,
           x, y + yOffset,
-          this._offsetCounter / this._offsetCounterRTT
+          this._offsetLoops + easeInOutCubic(this._offsetCounter / this._offsetCounterRTT)
         );
       }
     }
@@ -130,10 +131,10 @@ export default class Sketch {
     if (this._offsetCounterActive) {
       this._offsetCounter += 1;
 
-      // Allow 2 cycles.
       if (this._offsetCounter > this._offsetCounterRTT) {
         this._offsetCounterActive = false;
         this._offsetCounter = 0;
+        this._offsetLoops += 1;
       }
     }
   }
