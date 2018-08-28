@@ -104,7 +104,8 @@ class Sketch {
 
     this._offsetCounter = 0;
     this._offsetCounterActive = false;
-    this._offsetCounterRTT = 80;
+    this._offsetCounterRTT = 60;
+    this._offsetLoops = 0;
 
     this.onResize();
   }
@@ -196,7 +197,7 @@ class Sketch {
           this._ctx, this.u,
           this.fillBg, this.fillA, this.fillB,
           x, y + yOffset,
-          this._offsetCounter / this._offsetCounterRTT
+          this._offsetLoops + __webpack_require__.i(__WEBPACK_IMPORTED_MODULE_0__utils_js__["a" /* easeInOutCubic */])(this._offsetCounter / this._offsetCounterRTT)
         );
       }
     }
@@ -205,10 +206,10 @@ class Sketch {
     if (this._offsetCounterActive) {
       this._offsetCounter += 1;
 
-      // Allow 2 cycles.
       if (this._offsetCounter > this._offsetCounterRTT) {
         this._offsetCounterActive = false;
         this._offsetCounter = 0;
+        this._offsetLoops += 1;
       }
     }
   }
@@ -254,7 +255,7 @@ start();
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
+const drawTile = (ctx, u, fillDiamond, fillA, fillB, x, y, progress) => {
   ctx.save();
 
   // Scale by the unit
@@ -262,7 +263,7 @@ const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
   // Translate to the center of the tile
   ctx.translate(x + 0.5, y + 0.5);
   // Rotate (when animating)
-  ctx.rotate(Math.PI * progress);
+  ctx.rotate(Math.PI * progress / 2);
 
   ctx.fillStyle = fillA;
   ctx.beginPath();
@@ -286,7 +287,7 @@ const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = fillBg;
+  ctx.fillStyle = fillDiamond;
   ctx.beginPath();
   ctx.moveTo(-0.5, 0);
   ctx.lineTo(0, -0.5);
@@ -313,6 +314,7 @@ const drawTile = (ctx, u, fillBg, fillA, fillB, x, y, progress) => {
 /* unused harmony export getAngleBetweenPoints */
 /* unused harmony export bitwiseRound */
 /* unused harmony export stepEasing */
+/* harmony export (immutable) */ __webpack_exports__["a"] = easeInOutCubic;
 function getMouseCoordinates(evt, canvasBCR, devicePxRatio = 1) {
   let toReturn = {};
 
@@ -355,6 +357,10 @@ function stepEasing(n, t = 0.5) {
   const rest = Math.floor(n);
   return rest + Math.min(1, (n - rest) / t);
 }
+
+function easeInOutCubic(t) {
+  return t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1
+};
 
 /***/ })
 /******/ ]);
