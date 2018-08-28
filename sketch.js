@@ -88,6 +88,9 @@ export default class Sketch {
     this._canvas.style.height = `${innerHeight}px`;
     this._canvas.setAttribute('width', `${innerWidth * this._DPR}px`);
     this._canvas.setAttribute('height', `${innerHeight * this._DPR}px`);
+
+    const maxSize = Math.max(this._viewportSize.w, this._viewportSize.h);
+    this.u = Math.max(40, Math.min(200, maxSize / 20));
   }
 
   _onPointerMove(evt) {
